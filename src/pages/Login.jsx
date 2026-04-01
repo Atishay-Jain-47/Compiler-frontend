@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router';
-import { login } from '../services/operations/authApi';
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router";
+import { login } from "../services/operations/authApi";
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [formData, setFormData] = useState({ userName: '', password: '' });
+  const [formData, setFormData] = useState({ userName: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const { userName, password } = formData;
 
@@ -293,6 +293,30 @@ const Login = () => {
           font-size: 12px;
           color: #334155;
         }
+        .su-footer {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          margin-top: 28px;
+        }
+        .su-footer-text {
+          font-size: 13px;
+          color: #475569;
+        }
+        .su-footer-link {
+          font-size: 13px;
+          font-weight: 600;
+          color: #818cf8;
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          font-family: 'DM Sans', sans-serif;
+          transition: color 0.2s;
+          text-decoration: none;
+        }
+        .su-footer-link:hover { color: #a5b4fc; }
       `}</style>
 
       <div className="login-root">
@@ -304,22 +328,34 @@ const Login = () => {
           {/* Icon */}
           <div className="login-icon">
             <svg viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
 
           <h2 className="login-heading">Welcome back</h2>
-          <p className="login-subheading">Sign in to continue to your account</p>
+          <p className="login-subheading">
+            Sign in to continue to your account
+          </p>
 
           <form onSubmit={handleOnSubmit}>
             {/* Username */}
             <div className="field-group">
-              <label htmlFor="userName" className="field-label">Username</label>
+              <label htmlFor="userName" className="field-label">
+                Username
+              </label>
               <div className="field-wrap">
-                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
+                <svg
+                  className="field-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
                 </svg>
                 <input
                   required
@@ -337,14 +373,24 @@ const Login = () => {
 
             {/* Password */}
             <div className="field-group">
-              <label htmlFor="password" className="field-label">Password</label>
+              <label htmlFor="password" className="field-label">
+                Password
+              </label>
               <div className="field-wrap">
-                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <svg
+                  className="field-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   name="password"
                   value={password}
@@ -358,20 +404,34 @@ const Login = () => {
                   type="button"
                   className="toggle-pw"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
                     /* Eye-off icon */
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
                     </svg>
                   ) : (
                     /* Eye icon */
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                   )}
                 </button>
@@ -382,10 +442,17 @@ const Login = () => {
               Sign In
             </button>
           </form>
-
+          <div className="su-footer">
+            <span className="su-footer-text">Don't have an account?</span>
+            <a href="/signup" className="su-footer-link">
+              Sign up
+            </a>
+          </div>
           <div className="divider">
             <div className="divider-line" />
-            <span className="divider-text">secured with end-to-end encryption</span>
+            <span className="divider-text">
+              secured with end-to-end encryption
+            </span>
             <div className="divider-line" />
           </div>
         </div>
