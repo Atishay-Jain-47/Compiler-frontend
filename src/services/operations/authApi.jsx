@@ -1,5 +1,12 @@
 import { toast } from "react-hot-toast";
 
+import {
+  setCode,
+  setInput,
+  setOutput,
+  setLanguage,
+} from "../../slices/codeSlice";
+
 import { setLoading, setToken } from "../../slices/authSlice";
 import { setUser } from "../../slices/profileSlice";
 import { apiConnector } from "../apiConnector";
@@ -73,8 +80,12 @@ export function logout(navigate) {
   return (dispatch) => {
     dispatch(setToken(null));
     dispatch(setUser(null));
+    dispatch(setCode("print('Hello World')"));
+    dispatch(setInput(""));
+    dispatch(setOutput(""));
+    dispatch(setLanguage("PYTHON"));
     localStorage.clear();
+    navigate("/login");
     toast.success("Logged Out");
-    navigate("/");
   };
 }
