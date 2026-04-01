@@ -6,6 +6,7 @@ const initialState = {
   input: localStorage.getItem("input") || "",
   output: "",
   loading: false,
+  error: null,
 };
 
 const codeSlice = createSlice({
@@ -16,7 +17,7 @@ const codeSlice = createSlice({
       state.language = value.payload;
     },
     setCode(state, value) {
-      state.localStorageCode = value.payload;
+      state.code = value.payload;
     },
     setInput(state, value) {
       state.input = value.payload;
@@ -27,9 +28,19 @@ const codeSlice = createSlice({
     setLoading(state, value) {
       state.loading = value.payload;
     },
+    setError(state, value) {
+      state.error = value.payload;
+    },
   },
 });
 
-export const { setLanguage, setCode, setInput, setOutput, setLoading } = codeSlice.actions;
+export const {
+  setLanguage,
+  setCode,
+  setInput,
+  setOutput,
+  setLoading,
+  setError,
+} = codeSlice.actions;
 
 export default codeSlice.reducer;

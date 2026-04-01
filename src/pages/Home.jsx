@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
@@ -10,12 +10,14 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { setInput, setCode } from "../slices/codeSlice";
 import Navbar from "../components/Navbar";
 
-
 function Home() {
   const dispatch = useDispatch();
 
   const { language, code, input, output } = useSelector((state) => state.code);
 
+  const [currentCode, setCurrentCode] = useState(
+    code || "print('hello world')",
+  );
 
   console.log("Local Storage Code: ", code);
 
@@ -37,16 +39,16 @@ function Home() {
   };
 
   const codeChangeHandler = (value) => {
-    setCode(value);
     dispatch(setCode(value));
+    console.log("Code: ", value);
     localStorage.setItem("code", value);
-  }
+  };
 
   const inputChangeHandler = (value) => {
     // setInput(value);
     dispatch(setInput(value));
     localStorage.setItem("input", value);
-  }
+  };
 
   return (
     <>
@@ -56,53 +58,54 @@ function Home() {
         .hbtn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; filter: none; box-shadow: none; }
       `}</style>
 
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <div
+        style={{ height: "100vh", display: "flex", flexDirection: "column" }}
+      >
+        {/* Top Bar */}
+        <Navbar />
 
-      {/* Top Bar */}
-      <Navbar/>
+        <div className="flex flex-row justify-between gap-2 rounded-xl mt-2">
+          <div className="w-[60vw]">
+            {/* Editor */}
+            <CodeMirror
+              value={code}
+              height="100%"
+              theme={oneDark}
+              minHeight="90vh"
+              extensions={[getLanguageExtension()]}
+              onChange={(e) => codeChangeHandler(e)}
+            />
+          </div>
 
-      <div className="flex flex-row justify-between gap-2 rounded-xl mt-2">
-        <div className="w-[60vw]">
-          {/* Editor */}
-          <CodeMirror
-            value={code}
-            height="100%"
-            theme={oneDark}
-            minHeight="90vh"
-            extensions={[getLanguageExtension()]}
-            onChange={codeChangeHandler}
-          />
-        </div>
+          <div className="flex flex-col w-[40vw] gap-2">
+            {/* Input */}
+            <textarea
+              placeholder="Custom Input"
+              value={input}
+              onChange={(e) => inputChangeHandler(e.target.value)}
+              style={{
+                padding: "10px",
+                fontFamily: "monospace",
+              }}
+              className="bg-[#111] text-white rounded-xl h-[44vh]"
+            />
 
-        <div className="flex flex-col w-[40vw] gap-2">
-          {/* Input */}
-          <textarea
-            placeholder="Custom Input"
-            value={input}
-            onChange={(e) => inputChangeHandler(e.target.value)}
-            style={{
-              padding: "10px",
-              fontFamily: "monospace",
-            }}
-            className="bg-[#111] text-white rounded-xl h-[44vh]"
-          />
-
-          {/* Output */}
-          <textarea
-            placeholder="Output"
-            value={output}
-            readOnly
-            style={{
-              padding: "10px",
-              fontFamily: "monospace",
-              background: "#111",
-              color: "white",
-            }}
-            className="h-[45vh] rounded-xl"
-          />
+            {/* Output */}
+            <textarea
+              placeholder="Output"
+              value={output}
+              readOnly
+              style={{
+                padding: "10px",
+                fontFamily: "monospace",
+                background: "#111",
+                color: "white",
+              }}
+              className="h-[45vh] rounded-xl"
+            />
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }

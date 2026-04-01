@@ -3,62 +3,67 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../services/operations/authApi";
 import { apiConnector } from "../services/apiConnector";
-import { runEndpoints } from "../services/apis"
+import { runEndpoints } from "../services/apis";
 import toast from "react-hot-toast";
 import { setLanguage, setOutput } from "../slices/codeSlice";
 
 function Navbar() {
-
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { token } = useSelector((state) => state.auth);
   const { user } = useSelector((state) => state.profile);
   const { language, code, input } = useSelector((state) => state.code);
 
-
   console.log("Local Storage Code: ", code);
- 
-  const [loading, setLoading] = useState(false);
-//   const [output, setOutput] = useState("");
 
+  const [loading, setLoading] = useState(false);
+  //   const [output, setOutput] = useState("");
 
   const { RUN_API } = runEndpoints;
 
   const languageHandler = (value) => {
     dispatch(setLanguage(value));
     localStorage.setItem("language", value);
-  }
+  };
 
   const runCode = async () => {
-
-    if(!token) {
+    if (!token) {
       toast.error("Login Required");
       return navigate("/login");
     }
 
+    dispatch(setOutput(""));
+    localStorage.setItem("output", "");
     setLoading(true);
     dispatch(setOutput("Running..."));
 
     try {
       const response = await apiConnector(
-        "POST", 
-        RUN_API, 
+        "POST",
+        RUN_API,
         JSON.stringify({
-          language, code, input, user
-        }), 
+          language,
+          code,
+          input,
+          user,
+        }),
         {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-        }
-      ); 
+        },
+      );
 
       const data = response.data;
-      console.log("DATA.....",response);
+      console.log("DATA.....", response);
+      if (response.data.error) {
+        throw new Error(response.data.error);
+      }
       dispatch(setOutput(data.output));
     } catch (err) {
-      dispatch(setOutput(err.response?.data?.message || err.message));
-    } 
+      console.log("Error : ", err);
+      dispatch(setOutput(err?.message || String(err)));
+    }
     setLoading(false);
   };
 
@@ -101,73 +106,76 @@ function Navbar() {
 
   return (
     <div>
-        <div
-            style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "10px",
-                padding: "10px",
-                color: "red",
-            }}
-            >
-            {/* Left: language selector + run button */}
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                <select value={language} onChange={(e) => languageHandler(e.target.value)}>
-                <option value="PYTHON">Python</option>
-                <option value="CPP">C++</option>
-                <option value="JAVA">Java</option>
-                <option value="C">C</option>
-                <option value="GO">Go</option>
-                </select>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "10px",
+          padding: "10px",
+          color: "red",
+        }}
+      >
+        {/* Left: language selector + run button */}
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <select
+            value={language}
+            onChange={(e) => languageHandler(e.target.value)}
+          >
+            <option value="PYTHON">Python</option>
+            <option value="CPP">C++</option>
+            <option value="JAVA">Java</option>
+            <option value="C">C</option>
+            <option value="GO">Go</option>
+          </select>
 
-                <button
-                className="hbtn"
-                style={runStyle}
-                onClick={runCode}
-                disabled={loading}
-                >
-                {loading ? "Running..." : "Run"}
-                </button>
-            </div>
-
-            {/* Right: auth buttons */}
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                {token ? (
-                <>
-                    <span style={{ color: "white", fontSize: "14px" }}>
-                    {user?.userName}
-                    </span>
-                    <button
-                    className="hbtn"
-                    style={logoutStyle}
-                    onClick={() => dispatch(logout(navigate))}
-                    >
-                    Logout
-                    </button>
-                </>
-                ) : (
-                <>
-                    <button
-                    className="hbtn"
-                    style={loginStyle}
-                    onClick={() => navigate("/login")}
-                    >
-                    Log In
-                    </button>
-                    <button
-                    className="hbtn"
-                    style={signupStyle}
-                    onClick={() => navigate("/signup")}
-                    >
-                    Sign Up
-                    </button>
-                </>
-                )}
-            </div>
+          <button
+            className="hbtn"
+            style={runStyle}
+            onClick={runCode}
+            disabled={loading}
+          >
+            {loading ? "Running..." : "Run"}
+          </button>
         </div>
+
+        {/* Right: auth buttons */}
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          {token ? (
+            <>
+              <span style={{ color: "white", fontSize: "14px" }}>
+                {user?.userName}
+              </span>
+              <button
+                className="hbtn"
+                style={logoutStyle}
+                onClick={() => dispatch(logout(navigate))}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="hbtn"
+                style={loginStyle}
+                onClick={() => navigate("/login")}
+              >
+                Log In
+              </button>
+              <button
+                className="hbtn"
+                style={signupStyle}
+                onClick={() => navigate("/signup")}
+              >
+                Sign Up
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default Navbar
+export default Navbar;
