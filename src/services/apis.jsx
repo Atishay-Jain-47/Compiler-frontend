@@ -1,4 +1,4 @@
-const BASE_URL = "https://compiler.satyamvatsal.ovh/run"
+const BASE_URL = "https://compiler.satyamvatsal.ovh"
 
 
 // AUTH ENDPOINTS

@@ -25,14 +25,15 @@ export function signUp(userName, password, navigate) {
 
       console.log("SIGNUP API RESPONSE............", response)
 
-      if (!response.data.success) {
+      if (!response.data.userName) {
         throw new Error(response.data.message)
       }
+
       toast.success("Signup Successful")
       navigate("/login")
     } catch (error) {
       console.log("SIGNUP API ERROR............", error)
-      toast.error("Signup Failed")
+      toast.error(error.message || "Signup Failed");
       navigate("/signup")
     }
     dispatch(setLoading(false))
@@ -52,7 +53,7 @@ export function login(userName, password, navigate) {
 
       console.log("LOGIN API RESPONSE............", response)
 
-      if (!response.data.success) {
+      if (!response.data.token) {
         throw new Error(response.data.message)
       }
 
@@ -61,12 +62,12 @@ export function login(userName, password, navigate) {
   
     //   dispatch(setUser({ ...response.data.user, image: userImage }))
       
-      localStorage.setItem("token", JSON.stringify(response.data.token))
-      localStorage.setItem("user", JSON.stringify(response.data.user))
+      localStorage.setItem("token", (response.data.token))
+      localStorage.setItem("user", (response.data.userName))
       navigate("/");
     } catch (error) {
       console.log("LOGIN API ERROR............", error)
-      toast.error("Login Failed")
+      toast.error(error.message || "Login Failed");
     }
     dispatch(setLoading(false))
     toast.dismiss(toastId)
