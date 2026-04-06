@@ -11,6 +11,7 @@ import { setInput, setCode } from "../slices/codeSlice";
 import Navbar from "../components/Navbar";
 import { apiConnector } from "../services/apiConnector";
 import toast from "react-hot-toast";
+import { collabEndpoints } from "../services/apis";
 
 
 // --- Yjs & Collaboration Imports ---
@@ -21,12 +22,15 @@ import SockJS from "sockjs-client";
 import * as base64 from "base64-js";
 
 
+
+
 function Home() {
   const dispatch = useDispatch();
 
   const { language, code, input, output } = useSelector((state) => state.code);
   const {token} = useSelector((state) => state.auth);
   const userName = useSelector((state) => state.profile?.user); 
+  const { WS_URL, JOIN_ROOM_API, CREATE_ROOM_API } = collabEndpoints;
 
   // --- Collaboration State & Refs ---
   const [roomId, setRoomId] = useState("");
@@ -60,7 +64,7 @@ function Home() {
 
     if (isCollaborating && roomId.trim() !== "") {
       const client = new Client({
-        webSocketFactory: () => new SockJS(`http://localhost:8082/ws-compiler/`),
+        webSocketFactory: () => new SockJS(WS_URL),
         reconnectDelay: 5000,
         onConnect: () => {
           console.log("Connected to Room:", roomId);
@@ -179,7 +183,7 @@ const editorExtensions = useMemo(() => {
       toast.error("Please enter a Room ID to join.");
       return;
     }
-    const response = await apiConnector('POST','http://10.129.129.129:8082/collab/join',{roomId,userName},{Authorization: `Bearer ${token}`});
+    const response = await apiConnector('POST', JOIN_ROOM_API, {roomId,userName},{Authorization: `Bearer ${token}`});
     if (!isCollaborating) {
       toast.success(response.data.message);
     }
@@ -197,7 +201,7 @@ const editorExtensions = useMemo(() => {
       Authorization: `Bearer ${token}`,
     }
     console.log("Creating new room with data:", bodyData);
-    const response = await apiConnector('POST', 'http://10.129.129.129:8082/collab/info',bodyData,Header);
+    const response = await apiConnector('POST', CREATE_ROOM_API, bodyData, Header);
     const newRoomId = response.data.roomId;
     const message = response.data.message;
     toast.success(message);

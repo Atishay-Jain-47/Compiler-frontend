@@ -1,4 +1,4 @@
-const BASE_URL = "http://10.129.129.129:8082";
+const BASE_URL = "https://compiler.satyamvatsal.ovh";
 
 // AUTH ENDPOINTS
 export const endpoints = {
@@ -9,4 +9,11 @@ export const endpoints = {
 // RUN ENDPOINTS
 export const runEndpoints = {
   RUN_API: BASE_URL + "/run",
+};
+
+// COLLABORATION ENDPOINTS
+export const collabEndpoints = {
+  WS_URL: BASE_URL + "/ws-compiler",
+  JOIN_ROOM_API: BASE_URL + "/collab/join",
+  CREATE_ROOM_API: BASE_URL + "/collab/info",
 };
