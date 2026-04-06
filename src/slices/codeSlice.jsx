@@ -2,7 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   language: localStorage.getItem("language") || "PYTHON",
-  code: localStorage.getItem("code") || "print('Hello World')",
+  // Consider removing 'code' entirely if Yjs is handling the document state
+  code: localStorage.getItem("code") || "",
   input: localStorage.getItem("input") || "",
   output: "",
   loading: false,
@@ -13,23 +14,24 @@ const codeSlice = createSlice({
   name: "code",
   initialState: initialState,
   reducers: {
-    setLanguage(state, value) {
-      state.language = value.payload;
+    // Change 'value' to 'action' to follow Redux standards
+    setLanguage(state, action) {
+      state.language = action.payload;
     },
-    setCode(state, value) {
-      state.code = value.payload;
+    setCode(state, action) {
+      state.code = action.payload;
     },
-    setInput(state, value) {
-      state.input = value.payload;
+    setInput(state, action) {
+      state.input = action.payload;
     },
-    setOutput(state, value) {
-      state.output = value.payload;
+    setOutput(state, action) {
+      state.output = action.payload;
     },
-    setLoading(state, value) {
-      state.loading = value.payload;
+    setLoading(state, action) {
+      state.loading = action.payload;
     },
-    setError(state, value) {
-      state.error = value.payload;
+    setError(state, action) {
+      state.error = action.payload;
     },
   },
 });

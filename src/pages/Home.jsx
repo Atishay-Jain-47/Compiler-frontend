@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, use } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
@@ -9,6 +9,9 @@ import { go } from "@codemirror/lang-go";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { setInput, setCode } from "../slices/codeSlice";
 import Navbar from "../components/Navbar";
+import { apiConnector } from "../services/apiConnector";
+import toast from "react-hot-toast";
+
 
 // --- Yjs & Collaboration Imports ---
 import * as Y from "yjs";
@@ -17,22 +20,31 @@ import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import * as base64 from "base64-js";
 
+
 function Home() {
   const dispatch = useDispatch();
 
   const { language, code, input, output } = useSelector((state) => state.code);
+  const {token} = useSelector((state) => state.auth);
+  const userName = useSelector((state) => state.profile?.user); 
 
   // --- Collaboration State & Refs ---
   const [roomId, setRoomId] = useState("");
   const [isCollaborating, setIsCollaborating] = useState(false);
   const stompClientRef = useRef(null);
-  
+
   // Generate a random user ID for the WebSocket session
-  const userId = useMemo(() => "user-" + Math.random().toString(36).substring(2, 9), []);
-  
+  const userId = userName;
   // Initialize Yjs Document
-  const ydocRef = useRef(new Y.Doc());
-  const ytextRef = useRef(ydocRef.current.getText("codemirror"));
+  const ydocRef = useRef(null);
+  if (!ydocRef.current) {
+    ydocRef.current = new Y.Doc();
+  }
+
+  const ytextRef = useRef(null);
+  if (!ytextRef.current) {
+    ytextRef.current = ydocRef.current.getText("codemirror");
+  }
 
   // Ensure initial Redux code is loaded into Yjs exactly once
   useEffect(() => {
@@ -42,24 +54,50 @@ function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- WebSocket Connection Effect ---
+    // --- WebSocket Connection Effect ---
   useEffect(() => {
     const ydoc = ydocRef.current;
 
     if (isCollaborating && roomId.trim() !== "") {
       const client = new Client({
-        webSocketFactory: () => new SockJS("http://localhost:8080/ws-compiler"),
+        webSocketFactory: () => new SockJS(`http://localhost:8082/ws-compiler/`),
         reconnectDelay: 5000,
         onConnect: () => {
           console.log("Connected to Room:", roomId);
-          
+
           // 1. Listen for incoming changes from Spring Boot
           client.subscribe(`/topic/room/${roomId}`, (message) => {
             const payload = JSON.parse(message.body);
+            console.log("Received payload:", payload);
+            console.log("Received message:", message);
             if (payload.senderId !== userId) {
-              const updateArray = base64.toByteArray(payload.updateBase64);
-              Y.applyUpdate(ydoc, updateArray, "stomp");
+              if (payload.type === "SYNC_REQUEST") {
+                // Another user joined! Send them our full document state
+                const fullState = Y.encodeStateAsUpdate(ydoc);
+                client.publish({
+                  destination: `/app/editor.sync/${roomId}`,
+                  body: JSON.stringify({
+                    senderId: userId,
+                    type: "SYNC_STATE",
+                    updateBase64: base64.fromByteArray(fullState),
+                  }),
+                });
+              } else {
+                  if (!payload.updateBase64) return; // ← safety guard
+                  const updateArray = base64.toByteArray(payload.updateBase64);
+                  Y.applyUpdate(ydoc, updateArray, "stomp");
+                    console.log("Received update from", payload.senderId, "Type:", Y.encodeStateAsUpdate(ydoc).length, "bytes", "Current Editor Code:", ytextRef.current.toString());
+              }
             }
+          });
+
+          // 2. We just connected! Ask existing users for the current full state
+          client.publish({
+            destination: `/app/editor.sync/${roomId}`,
+            body: JSON.stringify({
+              senderId: userId,
+              type: "SYNC_REQUEST",
+            }),
           });
         },
       });
@@ -67,11 +105,13 @@ function Home() {
       client.activate();
       stompClientRef.current = client;
 
-      // 2. Broadcast local typing changes to Spring Boot
+      // 3. Broadcast local typing changes to Spring Boot
       const handleYjsUpdate = (update, origin) => {
+         console.log("Current Editor Code:", ytextRef.current.toString());
         if (origin !== "stomp" && stompClientRef.current?.connected) {
           const payload = {
             senderId: userId,
+            type: "UPDATE", // Tag standard typing events
             updateBase64: base64.fromByteArray(update),
           };
           stompClientRef.current.publish({
@@ -94,20 +134,34 @@ function Home() {
 
   const getLanguageExtension = () => {
     switch (language) {
-      case "PYTHON": return python();
-      case "CPP": return cpp();
-      case "GO": return go();
-      case "JAVA": return java();
-      case "C": return cpp();
-      default: return javascript();
+      case "PYTHON":
+        return python();
+      case "CPP":
+        return cpp();
+      case "GO":
+        return go();
+      case "JAVA":
+        return java();
+      case "C":
+        return cpp();
+      default:
+        return javascript();
     }
   };
 
-  // --- DYNAMIC EXTENSIONS ARRAY (Fix for cascading render error) ---
-  const editorExtensions = [getLanguageExtension()];
+  
+  // Create the yCollab extension exactly once, stable across renders
+const yCollabExtRef = useRef(null);
+if (!yCollabExtRef.current) {
+  yCollabExtRef.current = yCollab(ytextRef.current, null);
+}
+const editorExtensions = useMemo(() => {
+  const extensions = [getLanguageExtension()];
   if (isCollaborating) {
-    editorExtensions.push(yCollab(ytextRef.current, null));
+    extensions.push(yCollabExtRef.current); // ← stable ref, not a new instance
   }
+  return extensions;
+}, [language, isCollaborating]); // Only rebuild if language or collab mode changes
 
   const codeChangeHandler = (value) => {
     dispatch(setCode(value));
@@ -120,17 +174,35 @@ function Home() {
   };
 
   // --- Room Management Functions ---
-  const toggleCollaboration = () => {
+  const toggleCollaboration = async () => {
     if (!isCollaborating && roomId.trim() === "") {
-      alert("Please enter a Room ID to join.");
+      toast.error("Please enter a Room ID to join.");
       return;
+    }
+    const response = await apiConnector('POST','http://10.129.129.129:8082/collab/join',{roomId,userName},{Authorization: `Bearer ${token}`});
+    if (!isCollaborating) {
+      toast.success(response.data.message);
     }
     setIsCollaborating(!isCollaborating);
   };
 
-  const createNewRoom = () => {
-    const newRoomId = "room-" + Math.random().toString(36).substring(2, 8);
+  const createNewRoom = async () => {
+    const bodyData = {
+      userName ,
+      code,
+      language,
+      input
+    };
+    const Header = {
+      Authorization: `Bearer ${token}`,
+    }
+    console.log("Creating new room with data:", bodyData);
+    const response = await apiConnector('POST', 'http://10.129.129.129:8082/collab/info',bodyData,Header);
+    const newRoomId = response.data.roomId;
+    const message = response.data.message;
+    toast.success(message);
     setRoomId(newRoomId);
+
     setIsCollaborating(true);
   };
 
@@ -142,14 +214,18 @@ function Home() {
         .hbtn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; filter: none; box-shadow: none; }
       `}</style>
 
-      <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <div
+        style={{ height: "100vh", display: "flex", flexDirection: "column" }}
+      >
         {/* Top Bar */}
         <Navbar />
 
         {/* --- Collaboration UI Bar --- */}
         <div className="flex flex-row items-center gap-3 px-4 py-2 mt-1">
-          <span className="text-gray-300 font-medium text-sm">Collab Room:</span>
-          
+          <span className="text-gray-300 font-medium text-sm">
+            Collab Room:
+          </span>
+
           <input
             type="text"
             placeholder="e.g. room-123"
@@ -158,7 +234,7 @@ function Home() {
             disabled={isCollaborating}
             className="bg-[#222] text-white px-3 py-1.5 rounded border border-gray-600 focus:outline-none focus:border-blue-500 text-sm"
           />
-          
+
           {!isCollaborating ? (
             <>
               <button
@@ -185,9 +261,13 @@ function Home() {
               >
                 Disconnect
               </button>
-              
+
               <span className="text-green-400 text-xs ml-2 animate-pulse">
-                ● Live (Room ID: <span className="font-bold text-white tracking-wider">{roomId}</span>)
+                ● Live (Room ID:{" "}
+                <span className="font-bold text-white tracking-wider">
+                  {roomId}
+                </span>
+                )
               </span>
             </>
           )}
@@ -197,12 +277,15 @@ function Home() {
           <div className="w-[60vw]">
             {/* Editor */}
             <CodeMirror
+              key={isCollaborating ? "collab" : "solo"}   // ← forces clean remount
               value={isCollaborating ? undefined : code}
               height="100%"
               theme={oneDark}
               minHeight="85vh"
               extensions={editorExtensions}
-              onChange={(value) => codeChangeHandler(value)}
+              onChange={(value) => {
+                 codeChangeHandler(value); // ← don't fight yCollab
+              }}
             />
           </div>
 
@@ -221,7 +304,12 @@ function Home() {
               placeholder="Output"
               value={output}
               readOnly
-              style={{ padding: "10px", fontFamily: "monospace", background: "#111", color: "white" }}
+              style={{
+                padding: "10px",
+                fontFamily: "monospace",
+                background: "#111",
+                color: "white",
+              }}
               className="h-[42vh] rounded-xl border border-[#333] focus:outline-none"
             />
           </div>
