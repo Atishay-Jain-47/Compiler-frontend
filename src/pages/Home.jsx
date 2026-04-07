@@ -72,12 +72,14 @@ function Home() {
           // 1. Listen for incoming changes from Spring Boot
           client.subscribe(`/topic/room/${roomId}`, (message) => {
             const payload = JSON.parse(message.body);
-            console.log("Received payload:", payload);
-            console.log("Received message:", message);
-            if (payload.senderId !== userId) {
-              if (payload.type === "SYNC_REQUEST") {
+            console.log("Received payload from", payload.senderId, "Current user:", userId, payload);
+            
+            if (payload.type === "SYNC_REQUEST") {
+              // Only respond to SYNC_REQUEST from OTHER users
+              if (payload.senderId !== userId) {
                 // Another user joined! Send them our full document state
                 const fullState = Y.encodeStateAsUpdate(ydoc);
+                const codeContent = ytextRef.current.toString();
                 client.publish({
                   destination: `/app/editor.sync/${roomId}`,
                   body: JSON.stringify({
@@ -86,15 +88,24 @@ function Home() {
                     updateBase64: base64.fromByteArray(fullState),
                   }),
                 });
+                console.log("✓ User", payload.senderId, "joined. Sent SYNC_STATE with code:", codeContent);
+              }
+            } else if (payload.type === "SYNC_STATE" || payload.type === "UPDATE") {
+              // Process updates and state syncs from ANY user (including other users)
+              if (!payload.updateBase64) {
+                console.log("No updateBase64 in payload", payload);
+                return;
+              }
+              const updateArray = base64.toByteArray(payload.updateBase64);
+              Y.applyUpdate(ydoc, updateArray, "stomp");
+              // Sync remote update to Redux and localStorage immediately
+              const yjsContent = ytextRef.current.toString();
+              dispatch(setCode(yjsContent));
+              localStorage.setItem("code", yjsContent);
+              if (payload.type === "SYNC_STATE") {
+                console.log("✓ Received full SYNC_STATE from", payload.senderId, "Code:", yjsContent);
               } else {
-                  if (!payload.updateBase64) return; // ← safety guard
-                  const updateArray = base64.toByteArray(payload.updateBase64);
-                  Y.applyUpdate(ydoc, updateArray, "stomp");
-                  // Sync remote update to Redux and localStorage immediately
-                  const yjsContent = ytextRef.current.toString();
-                  dispatch(setCode(yjsContent));
-                  localStorage.setItem("code", yjsContent);
-                    console.log("Received update from", payload.senderId, "Type:", Y.encodeStateAsUpdate(ydoc).length, "bytes", "Current Editor Code:", yjsContent);
+                console.log("✓ Applied UPDATE from", payload.senderId, "Code:", yjsContent);
               }
             }
           });
@@ -115,7 +126,7 @@ function Home() {
 
       // 3. Broadcast local typing changes to Spring Boot
       const handleYjsUpdate = (update, origin) => {
-         console.log("Current Editor Code:", ytextRef.current.toString());
+        console.log("Yjs Update triggered - Origin:", origin, "Connected:", stompClientRef.current?.connected);
         if (origin !== "stomp" && stompClientRef.current?.connected) {
           const payload = {
             senderId: userId,
@@ -126,6 +137,7 @@ function Home() {
             destination: `/app/editor.sync/${roomId}`,
             body: JSON.stringify(payload),
           });
+          console.log("Published UPDATE to server from", userId);
         }
       };
 
@@ -138,7 +150,7 @@ function Home() {
         }
       };
     }
-  }, [isCollaborating, roomId, userId]);
+  }, [isCollaborating, roomId, userId, dispatch]);
 
   const getLanguageExtension = () => {
     switch (language) {
@@ -188,6 +200,16 @@ const editorExtensions = useMemo(() => {
       toast.error("Please enter a Room ID to join.");
       return;
     }
+    
+    // When joining an existing room, DON'T sync old localStorage data
+    // Instead, wait for SYNC_STATE from the room creator to avoid corrupted data
+    // Only clear Yjs if it has old data to prepare for incoming SYNC_STATE
+    if (!isCollaborating && ytextRef.current.length > 0) {
+      // Clear Yjs document to receive clean state from room creator
+      ytextRef.current.delete(0, ytextRef.current.length);
+      console.log("Cleared Yjs document before joining room to receive clean state");
+    }
+    
     const response = await apiConnector('POST', JOIN_ROOM_API, {roomId,userName},{Authorization: `Bearer ${token}`});
     if (!isCollaborating) {
       toast.success(response.data.message);
@@ -196,6 +218,12 @@ const editorExtensions = useMemo(() => {
   };
 
   const createNewRoom = async () => {
+    // Sync Redux code to Yjs BEFORE enabling collaboration
+    if (code && ytextRef.current.length === 0) {
+      ytextRef.current.insert(0, code);
+      console.log("Synced current code to Yjs before creating room:", code);
+    }
+    
     const bodyData = {
       userName ,
       code,
