@@ -80,7 +80,7 @@ export function logout(navigate) {
   return (dispatch) => {
     dispatch(setToken(null));
     dispatch(setUser(null));
-    dispatch(setCode("print('Hello World')"));
+    dispatch(setCode(""));
     dispatch(setInput(""));
     dispatch(setOutput(""));
     dispatch(setLanguage("PYTHON"));
