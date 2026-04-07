@@ -209,12 +209,16 @@ const editorExtensions = useMemo(() => {
       ytextRef.current.delete(0, ytextRef.current.length);
       console.log("Cleared Yjs document before joining room to receive clean state");
     }
-    
-    const response = await apiConnector('POST', JOIN_ROOM_API, {roomId,userName},{Authorization: `Bearer ${token}`});
-    if (!isCollaborating) {
-      toast.success(response.data.message);
+    try{
+      const response = await apiConnector('POST', JOIN_ROOM_API, {roomId,userName},{Authorization: `Bearer ${token}`});
+      if (!isCollaborating) {
+        toast.success(response.data.message);
+      }
+      setIsCollaborating(!isCollaborating);
+    } catch(error){
+      console.log("Error joining room:", error);
+      toast.error(error.response?.data?.message || "Failed to join room");
     }
-    setIsCollaborating(!isCollaborating);
   };
 
   const createNewRoom = async () => {

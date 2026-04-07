@@ -1,4 +1,4 @@
-const BASE_URL = "https://compiler.satyamvatsal.ovh";
+const BASE_URL = "http://localhost:8082";
 
 // AUTH ENDPOINTS
 export const endpoints = {
