@@ -38,7 +38,7 @@ function Home() {
   const stompClientRef = useRef(null);
 
   // Generate a random user ID for the WebSocket session
-  const userId = userName;
+  const userId = localStorage.getItem("user");
   // Initialize Yjs Document
   const ydocRef = useRef(null);
   if (!ydocRef.current) {
@@ -90,7 +90,11 @@ function Home() {
                   if (!payload.updateBase64) return; // ← safety guard
                   const updateArray = base64.toByteArray(payload.updateBase64);
                   Y.applyUpdate(ydoc, updateArray, "stomp");
-                    console.log("Received update from", payload.senderId, "Type:", Y.encodeStateAsUpdate(ydoc).length, "bytes", "Current Editor Code:", ytextRef.current.toString());
+                  // Sync remote update to Redux and localStorage immediately
+                  const yjsContent = ytextRef.current.toString();
+                  dispatch(setCode(yjsContent));
+                  localStorage.setItem("code", yjsContent);
+                    console.log("Received update from", payload.senderId, "Type:", Y.encodeStateAsUpdate(ydoc).length, "bytes", "Current Editor Code:", yjsContent);
               }
             }
           });
@@ -170,6 +174,7 @@ const editorExtensions = useMemo(() => {
   const codeChangeHandler = (value) => {
     dispatch(setCode(value));
     localStorage.setItem("code", value);
+    console.log("Local code change synced to storage:", value);
   };
 
   const inputChangeHandler = (value) => {
@@ -281,14 +286,14 @@ const editorExtensions = useMemo(() => {
           <div className="w-[60vw]">
             {/* Editor */}
             <CodeMirror
-              key={isCollaborating ? "collab" : "solo"}   // ← forces clean remount
+              key={isCollaborating ? "collab" : "solo"}   // ← stable key for yCollab binding
               value={isCollaborating ? undefined : code}
               height="100%"
               theme={oneDark}
               minHeight="85vh"
               extensions={editorExtensions}
               onChange={(value) => {
-                 codeChangeHandler(value); // ← don't fight yCollab
+                 codeChangeHandler(value);
               }}
             />
           </div>
