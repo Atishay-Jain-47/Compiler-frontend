@@ -2,7 +2,6 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   language: localStorage.getItem("language") || "PYTHON",
-  // Consider removing 'code' entirely if Yjs is handling the document state
   code: localStorage.getItem("code") || "",
   input: localStorage.getItem("input") || "",
   output: "",

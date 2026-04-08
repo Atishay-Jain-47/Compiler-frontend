@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, use } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
@@ -20,12 +20,14 @@ import { yCollab } from "y-codemirror.next";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import * as base64 from "base64-js";
+import { useNavigate } from "react-router";
 
 
 
 
 function Home() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const { language, code, input, output } = useSelector((state) => state.code);
   const {token} = useSelector((state) => state.auth);
@@ -200,6 +202,12 @@ const editorExtensions = useMemo(() => {
       toast.error("Please enter a Room ID to join.");
       return;
     }
+
+    if(!token){
+      toast.error("Login is required");
+      navigate('/login');
+      return;
+    }
     
     // When joining an existing room, DON'T sync old localStorage data
     // Instead, wait for SYNC_STATE from the room creator to avoid corrupted data
@@ -222,6 +230,13 @@ const editorExtensions = useMemo(() => {
   };
 
   const createNewRoom = async () => {
+
+    if(!token){
+      toast.error("Login is required");
+      navigate('/login');
+      return;
+    }
+
     // Sync Redux code to Yjs BEFORE enabling collaboration
     if (code && ytextRef.current.length === 0) {
       ytextRef.current.insert(0, code);
