@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router';
-import { signUp } from '../services/operations/authApi';
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router";
+import { signUp } from "../services/operations/authApi";
 
 const Signup = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [formData, setFormData] = useState({ userName: '', password: '' });
+  const [formData, setFormData] = useState({ userName: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
 
   const { userName, password } = formData;
@@ -28,6 +28,7 @@ const Signup = () => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Butcherman&display=swap');
 
         .signup-root {
           min-height: 100vh;
@@ -114,7 +115,7 @@ const Signup = () => {
           width: 48px;
           height: 48px;
           border-radius: 14px;
-          background: linear-gradient(135deg, #6366f1 0%, #14b8a6 100%);
+          background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -133,12 +134,16 @@ const Signup = () => {
         }
 
         .su-heading {
-          font-family: 'Syne', sans-serif;
-          font-size: 26px;
-          font-weight: 800;
-          color: #f1f5f9;
-          margin: 0 0 4px 0;
-          letter-spacing: -0.5px;
+        font-family: "Butcherman", system-ui;
+        font-size: 44px;
+        font-weight: 800;
+        margin: 0 0 4px 0;
+        letter-spacing: -0.5px;
+
+        background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
         }
 
         .su-subheading {
@@ -278,7 +283,7 @@ const Signup = () => {
           padding: 13px;
           border: none;
           border-radius: 12px;
-          background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+          background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
           color: #fff;
           font-family: 'Syne', sans-serif;
           font-size: 15px;
@@ -288,7 +293,9 @@ const Signup = () => {
           position: relative;
           overflow: hidden;
           transition: transform 0.15s, box-shadow 0.15s;
-          box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+          box-shadow:
+            0 4px 10px rgba(185, 28, 28, 0.5),
+            0 8px 24px rgba(127, 29, 29, 0.6);
           display: block;
           text-align: center;
         }
@@ -304,7 +311,10 @@ const Signup = () => {
 
         .su-submit-btn:hover {
           transform: translateY(-1px);
-          box-shadow: 0 8px 28px rgba(99,102,241,0.5);
+          box-shadow:
+            0 6px 14px rgba(185, 28, 28, 0.6),
+            0 14px 36px rgba(127, 29, 29, 0.75),
+            0 0 12px rgba(185, 28, 28, 0.4); /* subtle glow */
         }
 
         .su-submit-btn:hover::before { opacity: 1; }
@@ -365,10 +375,10 @@ const Signup = () => {
           {/* Icon */}
           <div className="su-icon">
             <svg viewBox="0 0 24 24">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <line x1="19" y1="8" x2="19" y2="14"/>
-              <line x1="22" y1="11" x2="16" y2="11"/>
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <line x1="19" y1="8" x2="19" y2="14" />
+              <line x1="22" y1="11" x2="16" y2="11" />
             </svg>
           </div>
 
@@ -376,14 +386,23 @@ const Signup = () => {
           <p className="su-subheading">Sign up to get started today</p>
 
           <form onSubmit={handleOnSubmit}>
-
             {/* Username */}
             <div className="su-field-group">
-              <label htmlFor="userName" className="su-label">Username</label>
+              <label htmlFor="userName" className="su-label">
+                Username
+              </label>
               <div className="su-field-wrap">
-                <svg className="su-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
+                <svg
+                  className="su-field-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
                 </svg>
                 <input
                   required
@@ -401,15 +420,25 @@ const Signup = () => {
 
             {/* Password */}
             <div className="su-field-group">
-              <label htmlFor="password" className="su-label">Password</label>
+              <label htmlFor="password" className="su-label">
+                Password
+              </label>
               <div className="su-field-wrap">
-                <svg className="su-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <svg
+                  className="su-field-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
                 <input
                   required
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   name="password"
                   value={password}
@@ -422,18 +451,32 @@ const Signup = () => {
                   type="button"
                   className="su-toggle-pw"
                   onClick={() => setShowPassword((p) => !p)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
                     </svg>
                   ) : (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                   )}
                 </button>
@@ -447,12 +490,16 @@ const Signup = () => {
 
           <div className="su-footer">
             <span className="su-footer-text">Already have an account?</span>
-            <a href="/login" className="su-footer-link">Sign in</a>
+            <a href="/login" className="su-footer-link">
+              Sign in
+            </a>
           </div>
 
           <div className="su-divider">
             <div className="su-divider-line" />
-            <span className="su-divider-text">secured with end-to-end encryption</span>
+            <span className="su-divider-text">
+              secured with end-to-end encryption
+            </span>
             <div className="su-divider-line" />
           </div>
         </div>

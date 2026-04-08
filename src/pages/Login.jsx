@@ -27,7 +27,7 @@ const Login = () => {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-
+        @import url('https://fonts.googleapis.com/css2?family=Butcherman&display=swap');
         .login-root {
           min-height: 100vh;
           display: flex;
@@ -112,7 +112,7 @@ const Login = () => {
           width: 48px;
           height: 48px;
           border-radius: 14px;
-          background: linear-gradient(135deg, #6366f1 0%, #14b8a6 100%);
+          background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -131,12 +131,16 @@ const Login = () => {
         }
 
         .login-heading {
-          font-family: 'Syne', sans-serif;
-          font-size: 26px;
+          font-family: "Butcherman", system-ui;
+          font-size: 48px;
           font-weight: 800;
-          color: #f1f5f9;
           margin: 0 0 4px 0;
           letter-spacing: -0.5px;
+
+          background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
         }
 
         .login-subheading {
@@ -242,7 +246,7 @@ const Login = () => {
           padding: 13px;
           border: none;
           border-radius: 12px;
-          background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+          background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
           color: #fff;
           font-family: 'Syne', sans-serif;
           font-size: 15px;
@@ -252,7 +256,11 @@ const Login = () => {
           position: relative;
           overflow: hidden;
           transition: transform 0.15s, box-shadow 0.15s;
-          box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+
+          /* Layered red shadow */
+          box-shadow:
+            0 4px 10px rgba(185, 28, 28, 0.5),
+            0 8px 24px rgba(127, 29, 29, 0.6);
         }
 
         .submit-btn::before {
@@ -264,18 +272,25 @@ const Login = () => {
           transition: opacity 0.2s;
         }
 
+        /* Hover state (stronger depth, same color family) */
         .submit-btn:hover {
           transform: translateY(-1px);
-          box-shadow: 0 8px 28px rgba(99,102,241,0.5);
+          box-shadow:
+            0 6px 14px rgba(185, 28, 28, 0.6),
+            0 14px 36px rgba(127, 29, 29, 0.75),
+            0 0 12px rgba(185, 28, 28, 0.4); /* subtle glow */
         }
 
         .submit-btn:hover::before {
           opacity: 1;
         }
 
+        /* Active state (pressed effect → reduced shadow) */
         .submit-btn:active {
           transform: translateY(0px);
-          box-shadow: 0 3px 12px rgba(99,102,241,0.3);
+          box-shadow:
+            0 2px 6px rgba(127, 29, 29, 0.5),
+            inset 0 2px 4px rgba(0, 0, 0, 0.25);
         }
 
         .divider {
