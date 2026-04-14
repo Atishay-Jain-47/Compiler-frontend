@@ -299,7 +299,11 @@ const editorExtensions = useMemo(() => {
 
     setIsCollaborating(true);
 
-    setConnectedUsers(new Set([userName]));
+    setConnectedUsers((prev) => {
+      const updated = new Set(prev);
+      updated.add(userName);
+      return updated;
+    });
   };
 
   return (
