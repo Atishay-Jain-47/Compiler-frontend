@@ -37,7 +37,8 @@ function Home() {
   // --- Collaboration State & Refs ---
   const [roomId, setRoomId] = useState("");
   const [isCollaborating, setIsCollaborating] = useState(false);
-  const stompClientRef = useRef(null);
+  const stompClientRef = useRef(null); 
+  const [connectedUsers, setConnectedUsers] = useState(new Set()); // Track unique user IDs in the room
 
   // Generate a random user ID for the WebSocket session
   const userId = localStorage.getItem("user");
@@ -76,10 +77,21 @@ function Home() {
             const payload = JSON.parse(message.body);
             console.log("Received payload from", payload.senderId, "Current user:", userId, payload);
             
+            if(payload.type === "DISCONNECT"){
+              setConnectedUsers((prev) => {
+                const updated = new Set(prev);
+                updated.delete(payload.senderId);
+                return updated;
+              });
+              console.log("User disconnected:", payload.senderId);
+              return;
+            }
+
             if (payload.type === "SYNC_REQUEST") {
               // Only respond to SYNC_REQUEST from OTHER users
               if (payload.senderId !== userId) {
                 // Another user joined! Send them our full document state
+                setConnectedUsers((prev) => new Set(prev).add(payload.senderId)); // Add new user to the set
                 const fullState = Y.encodeStateAsUpdate(ydoc);
                 const codeContent = ytextRef.current.toString();
                 client.publish({
@@ -94,10 +106,12 @@ function Home() {
               }
             } else if (payload.type === "SYNC_STATE" || payload.type === "UPDATE") {
               // Process updates and state syncs from ANY user (including other users)
+              //  setConnectedUsers((prev) => new Set(prev).add(payload.senderId)); 
               if (!payload.updateBase64) {
                 console.log("No updateBase64 in payload", payload);
                 return;
               }
+              setConnectedUsers((prev) => new Set(prev).add(payload.senderId));
               const updateArray = base64.toByteArray(payload.updateBase64);
               Y.applyUpdate(ydoc, updateArray, "stomp");
               // Sync remote update to Redux and localStorage immediately
@@ -209,6 +223,25 @@ const editorExtensions = useMemo(() => {
       return;
     }
     
+
+    if(isCollaborating){
+      toast.success("Left the collaboration room");
+      console.log("Yjs Update triggered - Origin:", origin, "Connected:", stompClientRef.current?.connected);
+      if (origin !== "stomp" && stompClientRef.current?.connected) {
+        const payload = {
+          senderId: userId,
+          type: "DISCONNECT",
+        };
+        stompClientRef.current.publish({
+          destination: `/app/editor.sync/${roomId}`,
+          body: JSON.stringify(payload),
+        });
+        console.log("Published DISCONNECT to server from", userId);
+      }
+      setConnectedUsers(new Set()); 
+      return setIsCollaborating(false);
+    }
+    
     // When joining an existing room, DON'T sync old localStorage data
     // Instead, wait for SYNC_STATE from the room creator to avoid corrupted data
     // Only clear Yjs if it has old data to prepare for incoming SYNC_STATE
@@ -227,6 +260,11 @@ const editorExtensions = useMemo(() => {
       console.log("Error joining room:", error);
       toast.error(error.response?.data?.message || "Failed to join room");
     }
+    setConnectedUsers((prev) => {
+      const updated = new Set(prev);
+      updated.add(userName);
+      return updated;
+    });
   };
 
   const createNewRoom = async () => {
@@ -260,6 +298,8 @@ const editorExtensions = useMemo(() => {
     setRoomId(newRoomId);
 
     setIsCollaborating(true);
+
+    setConnectedUsers(new Set([userName]));
   };
 
   return (
@@ -277,7 +317,7 @@ const editorExtensions = useMemo(() => {
         <Navbar />
 
         {/* --- Collaboration UI Bar --- */}
-        <div className="flex flex-row items-center gap-3 px-4 py-2 mt-1">
+        <div className="flex flex-row items-center relative gap-3 px-4 py-2 mt-1">
           <span className="text-gray-300 font-medium text-sm">
             Collab Room:
           </span>
@@ -324,6 +364,23 @@ const editorExtensions = useMemo(() => {
                   {roomId}
                 </span>
                 )
+              </span>
+
+              <span className="group text-blue-400 text-xs ml-2 animate-pulse hover:animate-none">
+                ● Connected Users:{" "}
+                <span className="font-bold text-white tracking-wider">
+                  {connectedUsers.size}
+                </span>
+                <div className="hidden absolute bg-gray-950 rounded-lg p-2 group-hover:block z-10">
+                  {
+                    Array.from(connectedUsers).map((user, index) => (
+                      <div key={index} className="bg-gray-800 text-pink-400 text-xs rounded px-2 py-1 mt-1">
+                        {console.log("Connected user:", user)}
+                        {user}
+                      </div>
+                    ))
+                  }
+                </div>
               </span>
             </>
           )}
