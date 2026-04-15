@@ -39,6 +39,8 @@ function Home() {
   const [isCollaborating, setIsCollaborating] = useState(false);
   const stompClientRef = useRef(null); 
   const [connectedUsers, setConnectedUsers] = useState(new Set()); // Track unique user IDs in the room
+  const [chatMessages, setChatMessages] = useState([]); // Chat messages
+  const [chatInput, setChatInput] = useState(""); // Current chat input
 
   // Generate a random user ID for the WebSocket session
   const userId = localStorage.getItem("user");
@@ -123,10 +125,24 @@ function Home() {
               } else {
                 console.log("✓ Applied UPDATE from", payload.senderId, "Code:", yjsContent);
               }
+            } else if (payload.type === "CHAT") {
+              // Handle chat messages from other users
+              console.log("Received CHAT message:", JSON.stringify(payload, null, 2));
+              console.log("Payload keys:", Object.keys(payload));
+              if (payload.senderId !== userId) {
+                const messageText = payload.text || payload.content || payload.message;
+                console.log("Extracted message text:", messageText);
+                setChatMessages((prev) => [...prev, {
+                  user: payload.senderId,
+                  message: messageText || "[Message content not received from server]",
+                  timestamp: new Date().toLocaleTimeString()
+                }]);
+              }
             }
           });
 
-          // 2. We just connected! Ask existing users for the current full state
+
+          // 3. We just connected! Ask existing users for the current full state
           client.publish({
             destination: `/app/editor.sync/${roomId}`,
             body: JSON.stringify({
@@ -238,6 +254,7 @@ const editorExtensions = useMemo(() => {
         console.log("Published DISCONNECT to server from", userId);
       }
       setConnectedUsers(new Set()); 
+      setChatMessages([]); // Clear chat messages
       return setIsCollaborating(false);
     }
     
@@ -303,6 +320,32 @@ const editorExtensions = useMemo(() => {
       updated.add(userId);
       return updated;
     });
+  };
+
+  const sendChatMessage = () => {
+    if (!chatInput.trim() || !stompClientRef.current?.connected) return;
+
+    const message = chatInput.trim();
+    console.log("Message.......", message);
+    setChatMessages((prev) => [...prev, {
+      user: userId,
+      message,
+      timestamp: new Date().toLocaleTimeString()
+    }]);
+
+    console.log(chatMessages);
+    const payloadToSend = {
+      senderId: userId,
+      type: "CHAT",
+      content: message,
+    };
+    console.log("Sending CHAT payload:", payloadToSend);
+    stompClientRef.current.publish({
+      destination: `/app/editor.sync/${roomId}`,
+      body: JSON.stringify(payloadToSend),
+    });
+
+    setChatInput("");
   };
 
   return (
@@ -412,7 +455,7 @@ const editorExtensions = useMemo(() => {
               value={input}
               onChange={(e) => inputChangeHandler(e.target.value)}
               style={{ padding: "10px", fontFamily: "monospace" }}
-              className="bg-[#111] text-white rounded-xl h-[42vh] border border-[#333] focus:outline-none focus:border-blue-500"
+              className="bg-[#111] text-white rounded-xl h-[25vh] border border-[#333] focus:outline-none focus:border-blue-500"
             />
 
             {/* Output */}
@@ -426,8 +469,45 @@ const editorExtensions = useMemo(() => {
                 background: "#111",
                 color: "white",
               }}
-              className="h-[42vh] rounded-xl border border-[#333] focus:outline-none"
+              className="h-[25vh] rounded-xl border border-[#333] focus:outline-none"
             />
+
+            {/* Chat */}
+            <div className="bg-[#111] text-white rounded-xl border border-[#333] h-[35vh] flex flex-col">
+              <div className="p-2 border-b border-[#333] text-sm font-medium">Room Chat</div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                {chatMessages.map((msg, index) => (
+                  <div key={index} className="text-xs">
+                    <span className="text-blue-400 font-medium">{msg.user}</span>
+                    <span className="text-gray-400 ml-2">{msg.timestamp}</span>
+                    <div className="text-white ml-4">{msg.message}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-2 border-t border-[#333] flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Type a message..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();   // ✅ prevents unwanted behavior
+                      sendChatMessage();
+                    }
+                  }}
+                  className="flex-1 bg-[#222] text-white px-2 py-1 rounded border border-[#444] focus:outline-none focus:border-blue-500 text-sm"
+                  disabled={!isCollaborating}
+                />
+                <button
+                  onClick={sendChatMessage}
+                  disabled={!isCollaborating || !chatInput.trim()}
+                  className="px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded text-sm transition-colors"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
