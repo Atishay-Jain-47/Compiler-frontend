@@ -226,8 +226,7 @@ const editorExtensions = useMemo(() => {
 
     if(isCollaborating){
       toast.success("Left the collaboration room");
-      console.log("Yjs Update triggered - Origin:", origin, "Connected:", stompClientRef.current?.connected);
-      if (origin !== "stomp" && stompClientRef.current?.connected) {
+      if (stompClientRef.current?.connected) {
         const payload = {
           senderId: userId,
           type: "DISCONNECT",
@@ -262,7 +261,7 @@ const editorExtensions = useMemo(() => {
     }
     setConnectedUsers((prev) => {
       const updated = new Set(prev);
-      updated.add(userName);
+      updated.add(userId);
       return updated;
     });
   };
@@ -301,7 +300,7 @@ const editorExtensions = useMemo(() => {
 
     setConnectedUsers((prev) => {
       const updated = new Set(prev);
-      updated.add(userName);
+      updated.add(userId);
       return updated;
     });
   };
