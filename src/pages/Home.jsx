@@ -12,7 +12,8 @@ import Navbar from "../components/Navbar";
 import { apiConnector } from "../services/apiConnector";
 import toast from "react-hot-toast";
 import { collabEndpoints } from "../services/apis";
-
+import chatbox from "../assets/chatbox.png";
+ 
 
 // --- Yjs & Collaboration Imports ---
 import * as Y from "yjs";
@@ -30,17 +31,18 @@ function Home() {
   const navigate = useNavigate();
 
   const { language, code, input, output } = useSelector((state) => state.code);
-  const {token} = useSelector((state) => state.auth);
-  const userName = useSelector((state) => state.profile?.user); 
+  const { token } = useSelector((state) => state.auth);
+  const userName = useSelector((state) => state.profile?.user);
   const { WS_URL, JOIN_ROOM_API, CREATE_ROOM_API } = collabEndpoints;
 
   // --- Collaboration State & Refs ---
   const [roomId, setRoomId] = useState("");
   const [isCollaborating, setIsCollaborating] = useState(false);
-  const stompClientRef = useRef(null); 
+  const stompClientRef = useRef(null);
   const [connectedUsers, setConnectedUsers] = useState(new Set()); // Track unique user IDs in the room
   const [chatMessages, setChatMessages] = useState([]); // Chat messages
   const [chatInput, setChatInput] = useState(""); // Current chat input
+  const [chatBoxVisible, setChatBoxVisible] = useState(false); // Chat box visibility
 
   // Generate a random user ID for the WebSocket session
   const userId = localStorage.getItem("user");
@@ -63,7 +65,7 @@ function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-    // --- WebSocket Connection Effect ---
+  // --- WebSocket Connection Effect ---
   useEffect(() => {
     const ydoc = ydocRef.current;
 
@@ -78,8 +80,8 @@ function Home() {
           client.subscribe(`/topic/room/${roomId}`, (message) => {
             const payload = JSON.parse(message.body);
             console.log("Received payload from", payload.senderId, "Current user:", userId, payload);
-            
-            if(payload.type === "DISCONNECT"){
+
+            if (payload.type === "DISCONNECT") {
               setConnectedUsers((prev) => {
                 const updated = new Set(prev);
                 updated.delete(payload.senderId);
@@ -201,19 +203,19 @@ function Home() {
     }
   };
 
-  
+
   // Create the yCollab extension exactly once, stable across renders
-const yCollabExtRef = useRef(null);
-if (!yCollabExtRef.current) {
-  yCollabExtRef.current = yCollab(ytextRef.current, null);
-}
-const editorExtensions = useMemo(() => {
-  const extensions = [getLanguageExtension()];
-  if (isCollaborating) {
-    extensions.push(yCollabExtRef.current); // ← stable ref, not a new instance
+  const yCollabExtRef = useRef(null);
+  if (!yCollabExtRef.current) {
+    yCollabExtRef.current = yCollab(ytextRef.current, null);
   }
-  return extensions;
-}, [language, isCollaborating]); // Only rebuild if language or collab mode changes
+  const editorExtensions = useMemo(() => {
+    const extensions = [getLanguageExtension()];
+    if (isCollaborating) {
+      extensions.push(yCollabExtRef.current); // ← stable ref, not a new instance
+    }
+    return extensions;
+  }, [language, isCollaborating]); // Only rebuild if language or collab mode changes
 
   const codeChangeHandler = (value) => {
     dispatch(setCode(value));
@@ -233,14 +235,14 @@ const editorExtensions = useMemo(() => {
       return;
     }
 
-    if(!token){
+    if (!token) {
       toast.error("Login is required");
       navigate('/login');
       return;
     }
-    
 
-    if(isCollaborating){
+
+    if (isCollaborating) {
       toast.success("Left the collaboration room");
       if (stompClientRef.current?.connected) {
         const payload = {
@@ -253,11 +255,11 @@ const editorExtensions = useMemo(() => {
         });
         console.log("Published DISCONNECT to server from", userId);
       }
-      setConnectedUsers(new Set()); 
+      setConnectedUsers(new Set());
       setChatMessages([]); // Clear chat messages
       return setIsCollaborating(false);
     }
-    
+
     // When joining an existing room, DON'T sync old localStorage data
     // Instead, wait for SYNC_STATE from the room creator to avoid corrupted data
     // Only clear Yjs if it has old data to prepare for incoming SYNC_STATE
@@ -266,13 +268,13 @@ const editorExtensions = useMemo(() => {
       ytextRef.current.delete(0, ytextRef.current.length);
       console.log("Cleared Yjs document before joining room to receive clean state");
     }
-    try{
-      const response = await apiConnector('POST', JOIN_ROOM_API, {roomId,userName},{Authorization: `Bearer ${token}`});
+    try {
+      const response = await apiConnector('POST', JOIN_ROOM_API, { roomId, userName }, { Authorization: `Bearer ${token}` });
       if (!isCollaborating) {
         toast.success(response.data.message);
       }
       setIsCollaborating(!isCollaborating);
-    } catch(error){
+    } catch (error) {
       console.log("Error joining room:", error);
       toast.error(error.response?.data?.message || "Failed to join room");
     }
@@ -285,7 +287,7 @@ const editorExtensions = useMemo(() => {
 
   const createNewRoom = async () => {
 
-    if(!token){
+    if (!token) {
       toast.error("Login is required");
       navigate('/login');
       return;
@@ -296,9 +298,9 @@ const editorExtensions = useMemo(() => {
       ytextRef.current.insert(0, code);
       console.log("Synced current code to Yjs before creating room:", code);
     }
-    
+
     const bodyData = {
-      userName ,
+      userName,
       code,
       language,
       input
@@ -443,19 +445,18 @@ const editorExtensions = useMemo(() => {
               minHeight="85vh"
               extensions={editorExtensions}
               onChange={(value) => {
-                 codeChangeHandler(value);
+                codeChangeHandler(value);
               }}
             />
           </div>
 
-          <div className="flex flex-col w-[40vw] gap-2">
+          <div className="flex flex-col w-[40vw] gap-2 h-full relative ">
             {/* Input */}
             <textarea
               placeholder="Custom Input"
               value={input}
               onChange={(e) => inputChangeHandler(e.target.value)}
-              style={{ padding: "10px", fontFamily: "monospace" }}
-              className="bg-[#111] text-white rounded-xl h-[25vh] border border-[#333] focus:outline-none focus:border-blue-500"
+              className="flex bg-[#111] text-white rounded-xl h-[42vh] border border-[#333] focus:outline-none focus:border-blue-500 p-2 font-mono "
             />
 
             {/* Output */}
@@ -463,51 +464,58 @@ const editorExtensions = useMemo(() => {
               placeholder="Output"
               value={output}
               readOnly
-              style={{
-                padding: "10px",
-                fontFamily: "monospace",
-                background: "#111",
-                color: "white",
-              }}
-              className="h-[25vh] rounded-xl border border-[#333] focus:outline-none"
+              className="flex bg-[#111] text-white rounded-xl h-[42vh] border border-[#333] focus:outline-none focus:border-blue-500 p-2 font-mono"
             />
 
             {/* Chat */}
-            <div className="bg-[#111] text-white rounded-xl border border-[#333] h-[35vh] flex flex-col">
-              <div className="p-2 border-b border-[#333] text-sm font-medium">Room Chat</div>
-              <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {chatMessages.map((msg, index) => (
-                  <div key={index} className="text-xs">
-                    <span className="text-blue-400 font-medium">{msg.user}</span>
-                    <span className="text-gray-400 ml-2">{msg.timestamp}</span>
-                    <div className="text-white ml-4">{msg.message}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="p-2 border-t border-[#333] flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();   // ✅ prevents unwanted behavior
-                      sendChatMessage();
-                    }
-                  }}
-                  className="flex-1 bg-[#222] text-white px-2 py-1 rounded border border-[#444] focus:outline-none focus:border-blue-500 text-sm"
-                  disabled={!isCollaborating}
-                />
-                <button
-                  onClick={sendChatMessage}
-                  disabled={!isCollaborating || !chatInput.trim()}
-                  className="px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white rounded text-sm transition-colors"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
+
+            {isCollaborating && 
+              (
+                <img src={chatbox} alt="chatbox icon" onClick={() => setChatBoxVisible(!chatBoxVisible)} className="absolute right-2 bottom-2 w-18 h-18 cursor-pointer z-20 hover:opacity-80 bg-violet-500 rounded-full p-2 animate-bounce" />
+              )
+            }
+
+            {
+              isCollaborating && chatBoxVisible &&
+              (<div className="bg-[#111] absolute text-white rounded-xl border border-[#333] h-[45vh] flex flex-col bottom-4 right-22 w-80 z-30 shadow-lg">
+                <div className="p-3 border-b border-[#444] text-sm font-semibold bg-[#1a1a1a] rounded-t-xl">💬 Room Chat</div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {chatMessages.map((msg, index) => (
+                    <div key={index} className="text-xs break-words">
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-400 font-semibold px-2 py-1 bg-[#222] rounded">{msg.user}</span>
+                        <span className="text-gray-500 text-xs">{msg.timestamp}</span>
+                      </div>
+                      <div className="text-gray-200 ml-2 mt-1 bg-[#1a1a1a] p-2 rounded">{msg.message}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-2 border-t border-[#444] flex gap-1.5 bg-[#1a1a1a] rounded-b-xl">
+                  <input
+                    type="text"
+                    placeholder="Message..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        sendChatMessage();
+                      }
+                    }}
+                    className="flex-1 bg-[#222] text-white px-2 py-1 rounded border border-[#444] focus:outline-none focus:border-blue-400 text-xs"
+                    disabled={!isCollaborating}
+                  />
+                  <button
+                    onClick={sendChatMessage}
+                    disabled={!isCollaborating || !chatInput.trim()}
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white rounded text-xs font-medium transition-colors"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>)
+            }
+
           </div>
         </div>
       </div>
