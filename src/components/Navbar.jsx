@@ -5,7 +5,7 @@ import { logout } from "../services/operations/authApi";
 import { apiConnector } from "../services/apiConnector";
 import { runEndpoints } from "../services/apis";
 import toast from "react-hot-toast";
-import { setLanguage, setOutput } from "../slices/codeSlice";
+import { setLanguage, setOutput,setCode } from "../slices/codeSlice";
 
 function Navbar() {
   const dispatch = useDispatch();
@@ -13,7 +13,7 @@ function Navbar() {
 
   const { token } = useSelector((state) => state.auth);
   const { user } = useSelector((state) => state.profile);
-  const { language, code, input } = useSelector((state) => state.code);
+  const { language, input, code } = useSelector((state) => state.code);
 
   console.log("Local Storage Code: ", code);
 
@@ -25,7 +25,8 @@ function Navbar() {
   const languageHandler = (value) => {
     dispatch(setLanguage(value));
     localStorage.setItem("language", value);
-  };
+
+  }
 
   const runCode = async () => {
     if (!token) {
@@ -72,7 +73,7 @@ function Navbar() {
       toast.error("Login Required");
       return navigate("/login");
     }
-
+    console.log("Saving code for language", language);
       const key = `code_${language}`;
       localStorage.setItem(key, code);
       toast.success("Code saved successfully");
@@ -151,7 +152,7 @@ function Navbar() {
             {loading ? "Running..." : "Run"}
           </button>
 
-            <button className="hbtn py-1 px-2 text-sm bg-blue-500 text-white border border-blue-600 hover:bg-blue-600 rounded-md" onClick={saveCodeHandler}>
+            <button className="hbtn py-2 px-3 text-sm bg-blue-600 text-white border border-blue-600 hover:bg-blue-600 rounded-md" onClick={saveCodeHandler}>
 
               {loading ? "Saving..." : "Save"}
             </button>

@@ -78,13 +78,8 @@ export function login(userName, password, navigate) {
 
 export function logout(navigate) {
   return (dispatch) => {
-    dispatch(setToken(null));
-    dispatch(setUser(null));
-    dispatch(setCode(""));
-    dispatch(setInput(""));
-    dispatch(setOutput(""));
-    dispatch(setLanguage("PYTHON"));
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/login");
     toast.success("Logged Out");
   };

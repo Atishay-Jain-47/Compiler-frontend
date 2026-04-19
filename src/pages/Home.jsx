@@ -30,7 +30,7 @@ function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { language, code, input, output } = useSelector((state) => state.code);
+  const { language, input, output ,code} = useSelector((state) => state.code);
   const { token } = useSelector((state) => state.auth);
   const userName = useSelector((state) => state.profile?.user);
   const { WS_URL, JOIN_ROOM_API, CREATE_ROOM_API } = collabEndpoints;
@@ -57,13 +57,18 @@ function Home() {
     ytextRef.current = ydocRef.current.getText("codemirror");
   }
 
+  useEffect( () => {
+    console.log("Language changed to", language);
+    dispatch(setCode(localStorage.getItem(`code_${language}`) || ""));
+  }, [language]);
+
   // Ensure initial Redux code is loaded into Yjs exactly once
   useEffect(() => {
     if (ytextRef.current.length === 0 && code) {
       ytextRef.current.insert(0, code);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [code]);
 
   // --- WebSocket Connection Effect ---
   useEffect(() => {
@@ -267,6 +272,8 @@ function Home() {
       // Clear Yjs document to receive clean state from room creator
       ytextRef.current.delete(0, ytextRef.current.length);
       console.log("Cleared Yjs document before joining room to receive clean state");
+      dispatch(setCode(""));
+      localStorage.setItem("code", "");
     }
     try {
       const response = await apiConnector('POST', JOIN_ROOM_API, { roomId, userName }, { Authorization: `Bearer ${token}` });
@@ -292,6 +299,9 @@ function Home() {
       navigate('/login');
       return;
     }
+    dispatch(setCode(""));
+    localStorage.setItem("code", "");
+
 
     // Sync Redux code to Yjs BEFORE enabling collaboration
     if (code && ytextRef.current.length === 0) {
@@ -446,6 +456,7 @@ function Home() {
               extensions={editorExtensions}
               onChange={(value) => {
                 codeChangeHandler(value);
+
               }}
             />
           </div>
@@ -481,7 +492,7 @@ function Home() {
                 <div className="p-3 border-b border-[#444] text-sm font-semibold bg-[#1a1a1a] rounded-t-xl">💬 Room Chat</div>
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
                   {chatMessages.map((msg, index) => (
-                    <div key={index} className="text-xs break-words">
+                    <div key={index} className="text-xs wrap-word-break">
                       <div className="flex items-center gap-2">
                         <span className="text-blue-400 font-semibold px-2 py-1 bg-[#222] rounded">{msg.user}</span>
                         <span className="text-gray-500 text-xs">{msg.timestamp}</span>

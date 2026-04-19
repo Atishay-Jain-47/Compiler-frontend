@@ -10,7 +10,7 @@ const initialState = {
   error: null,
 };
 
-const codeSlice = createSlice({
+const codeSlice = createSlice({ 
   name: "code",
   initialState: initialState,
   reducers: {
