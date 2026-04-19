@@ -2,8 +2,9 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   language: localStorage.getItem("language") || "PYTHON",
-  code: localStorage.getItem("code") || "",
+  code: localStorage.getItem(`code_${localStorage.getItem("language")}`) || "",
   input: localStorage.getItem("input") || "",
+
   output: "",
   loading: false,
   error: null,

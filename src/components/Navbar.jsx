@@ -37,7 +37,7 @@ function Navbar() {
     localStorage.setItem("output", "");
     setLoading(true);
     dispatch(setOutput("Running..."));
-
+    const userName = localStorage.getItem("user");
     try {
       const response = await apiConnector(
         "POST",
@@ -46,7 +46,7 @@ function Navbar() {
           language,
           code,
           input,
-          user,
+          user: userName,
         }),
         {
           "Content-Type": "application/json",
@@ -66,6 +66,19 @@ function Navbar() {
     }
     setLoading(false);
   };
+
+  const saveCodeHandler = () => {
+    if(!token){
+      toast.error("Login Required");
+      return navigate("/login");
+    }
+
+      const key = `code_${language}`;
+      localStorage.setItem(key, code);
+      toast.success("Code saved successfully");
+  };
+
+  // const 
 
   const btnBase = {
     padding: "6px 16px",
@@ -137,6 +150,11 @@ function Navbar() {
           >
             {loading ? "Running..." : "Run"}
           </button>
+
+            <button className="hbtn py-1 px-2 text-sm bg-blue-500 text-white border border-blue-600 hover:bg-blue-600 rounded-md" onClick={saveCodeHandler}>
+
+              {loading ? "Saving..." : "Save"}
+            </button>
         </div>
 
         {/* Right: auth buttons */}
