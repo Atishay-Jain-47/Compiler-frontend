@@ -60,7 +60,18 @@ function Home() {
   useEffect( () => {
     console.log("Language changed to", language);
     dispatch(setCode(localStorage.getItem(`code_${language}`) || ""));
-  }, [language]);
+  }, [language, dispatch]);
+
+  useEffect(() => {
+    if(!isCollaborating){
+      localStorage.setItem('code', localStorage.getItem(`code_${language}`) || "");
+      dispatch(setCode(localStorage.getItem(`code_${language}`) || ""));
+    }
+
+    if(isCollaborating){
+      dispatch(setCode(""));
+    }
+  }, [isCollaborating, dispatch, language]);
 
   // Ensure initial Redux code is loaded into Yjs exactly once
   useEffect(() => {
@@ -189,7 +200,7 @@ function Home() {
         }
       };
     }
-  }, [isCollaborating, roomId, userId, dispatch]);
+  }, [isCollaborating, roomId, userId, dispatch, WS_URL]);
 
   const getLanguageExtension = () => {
     switch (language) {
@@ -220,7 +231,7 @@ function Home() {
       extensions.push(yCollabExtRef.current); // ← stable ref, not a new instance
     }
     return extensions;
-  }, [language, isCollaborating]); // Only rebuild if language or collab mode changes
+  }, [language, isCollaborating, getLanguageExtension]); // Only rebuild if language or collab mode changes
 
   const codeChangeHandler = (value) => {
     dispatch(setCode(value));

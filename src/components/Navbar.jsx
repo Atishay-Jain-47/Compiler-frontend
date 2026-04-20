@@ -5,7 +5,8 @@ import { logout } from "../services/operations/authApi";
 import { apiConnector } from "../services/apiConnector";
 import { runEndpoints } from "../services/apis";
 import toast from "react-hot-toast";
-import { setLanguage, setOutput,setCode } from "../slices/codeSlice";
+import { setLanguage, setOutput, setCode } from "../slices/codeSlice";
+import { extensions } from "../utils/languageExtension";
 
 function Navbar() {
   const dispatch = useDispatch();
@@ -27,6 +28,21 @@ function Navbar() {
     localStorage.setItem("language", value);
 
   }
+  const downloadText = () => {
+    const text = code;
+    const blob = new Blob([text], { type: extensions[language] });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `code.${extensions[language]}`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  };
 
   const runCode = async () => {
     if (!token) {
@@ -152,9 +168,15 @@ function Navbar() {
             {loading ? "Running..." : "Run"}
           </button>
 
-            <button className="hbtn py-2 px-3 text-sm bg-blue-600 text-white border border-blue-600 hover:bg-blue-600 rounded-md" onClick={saveCodeHandler}>
+            <button className="hbtn py-2 px-3 text-sm bg-blue-600 text-white border border-blue-600 hover:bg-blue-600 rounded-md cursor-pointer" onClick={saveCodeHandler}>
 
-              {loading ? "Saving..." : "Save"}
+              Save
+            </button>
+            
+            <button className="hbtn py-2 px-3 text-sm bg-red-500 text-white border border-red-600 hover:bg-red-600 cursor-pointer rounded-md" onClick={saveCodeHandler}
+              onClick={downloadText}
+            >
+              Download
             </button>
         </div>
 
