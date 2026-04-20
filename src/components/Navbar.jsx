@@ -5,7 +5,7 @@ import { logout } from "../services/operations/authApi";
 import { apiConnector } from "../services/apiConnector";
 import { runEndpoints } from "../services/apis";
 import toast from "react-hot-toast";
-import { setLanguage, setOutput, setCode } from "../slices/codeSlice";
+import { setLanguage, setOutput } from "../slices/codeSlice";
 import { extensions } from "../utils/languageExtension";
 
 function Navbar() {
